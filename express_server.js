@@ -57,8 +57,15 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortUrl/delete", (req, res) => {
-  delete urlDatabase[HTMLTableRowElement.params.shortURL];
+  delete urlDatabase[req.params.shortURL];
   res.redirect("urls");
+});
+
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  urlDatabase[id] = req.body.longURL;
+
+  res.redirect(`/urls`); // Respond redirect
 });
 
 app.listen(PORT, () => {
