@@ -8,6 +8,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 
+const getUserByEmail = (email, database) => {
+  for (const userID in database) {
+    if (database[userID].email === email) {
+      return database[userID];
+    }
+  }
+  return undefined;
+};
+
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
@@ -129,20 +138,6 @@ app.post("/urls/:id", (req, res) => {
   res.redirect(`/urls`); // Respond redirect to index page
 });
 
-app.post("/login", (req, res) => {
-  const users = req.body.users;
-
-  res.cookie("users", users);
-
-  res.redirect(`/urls`); // Respond redirect to index page
-});
-
-app.post("/logout", (req, res) => {
-  res.clearCookie("users");
-
-  res.redirect(`/urls`); // Respond redirect to index page
-});
-
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -172,6 +167,39 @@ app.post("/register", (req, res) => {
 
   res.cookie("user_id", userId);
   res.redirect("/urls");
+});
+
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const currentUser = getUserByEmail(email, users);
+
+  if (!currentUser) {
+    return res.status(403).send("user does not exist!");
+  }
+
+  if (password !== currentUser.password) {
+    return res.status(403).send("Incorrect password");
+  }
+
+  res.cookie("user_id", currentUser.id);
+  return res.redirect(`/urls`);
+
+  // for (const [userID, value] of Object.entries(users)) {
+  //   console.log(req.body.email, req.body.password);
+  //   if (req.body.email === value.email) {
+  //     if (req.body.password === value.password) {
+
+  //     } // Respond redirect to urls page
+  //   }
+  // }
+  // res.status(403).send("403");
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect(`/urls`); // Respond redirect to index page
 });
 
 app.listen(PORT, () => {
