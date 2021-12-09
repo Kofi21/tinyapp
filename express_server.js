@@ -58,6 +58,8 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
+app.get("/login", (req, res) => {});
+
 app.get("/urls", (req, res) => {
   console.log(users);
   const userId = req.cookies["user_id"];
@@ -147,15 +149,20 @@ app.post("/register", (req, res) => {
     password,
   };
 
-  users[userId] = newUser;
-
   if (!email || !password) {
     return res.status(400).send("email and password cannot be blank");
   }
 
-  if (email) {
-    return res.status(400).send("a user with that email already exists");
+  for (let userId in users) {
+    let user = users[userId];
+
+    if (user.email === email) {
+      res.status(403).send("Sorry, user already exists!");
+      return;
+    }
   }
+
+  users[userId] = newUser;
 
   res.cookie("user_id", userId);
   res.redirect("/urls");
