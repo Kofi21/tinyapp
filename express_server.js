@@ -42,7 +42,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  res.json(urlDatabase, users);
 });
 
 app.get("/hello", (req, res) => {
@@ -50,16 +50,22 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  const userId = req.cookies["user_id"];
+
   const templateVars = {
-    users,
+    users: users[userId],
   };
   res.render("urls_register", templateVars);
 });
 
 app.get("/urls", (req, res) => {
+  console.log(users);
+  const userId = req.cookies["user_id"];
+  console.log("user_id", userId);
+  console.log(users[userId]);
   const templateVars = {
     urls: urlDatabase,
-    users,
+    users: users[userId],
   };
   res.render("urls_index", templateVars);
 });
@@ -81,7 +87,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: shortURL,
     longURL: urlDatabase[req.params.shortURL],
-    users,
+    users: req.cookies[users],
   };
   res.render("urls_show", templateVars);
 });
@@ -116,15 +122,15 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
+  const users = req.body.users;
 
-  res.cookie("username", username);
+  res.cookie("users", users);
 
   res.redirect(`/urls`); // Respond redirect to index page
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("users");
 
   res.redirect(`/urls`); // Respond redirect to index page
 });
@@ -141,10 +147,17 @@ app.post("/register", (req, res) => {
     password,
   };
 
-  users = newUser;
+  users[userId] = newUser;
+
+  if (!email || !password) {
+    return res.status(400).send("email and password cannot be blank");
+  }
+
+  if (email) {
+    return res.status(400).send("a user with that email already exists");
+  }
 
   res.cookie("user_id", userId);
-  console.log(users);
   res.redirect("/urls");
 });
 
