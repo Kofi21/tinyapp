@@ -18,8 +18,14 @@ const getUserByEmail = (email, database) => {
 };
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 let users = {
@@ -88,30 +94,49 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  // const email = req.body.email;
+  // // const password = req.body.password;
+  // console.log(email);
+  // const currentUser = getUserByEmail(email, users);
+  const userId = req.cookies.user_id;
   const templateVars = {
     users,
   };
-  res.render("urls_new", templateVars);
+  if (userId) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   //What would happen if a client requests a non-existent shortURL?
-  if (!urlDatabase[shortURL]) {
-    res.send("<html><body>Error</body></html>\n");
-    return;
-  }
+  // if (!urlDatabase[shortURL]) {
+  //   res.send("<html><body>Error</body></html>\n");
+  //   return;
+  // }
+  console.log("------kmdlmf", urlDatabase);
   const templateVars = {
     shortURL: shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     users: req.cookies[users],
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const shortURL = req.params.shortURL;
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL].longURL;
+    if (longURL) {
+      res.redirect(longURL);
+    }
+  } else {
+    res.send(
+      `<html><h3>Invalid short URL. Please resubmit your URL <a href="/urls/new">here</a></h3></html>`
+    );
+  }
 });
 
 app.post("/urls", (req, res) => {
