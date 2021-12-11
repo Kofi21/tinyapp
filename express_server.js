@@ -17,14 +17,25 @@ const getUserByEmail = (email, database) => {
   return undefined;
 };
 
+// const urlForUser = (userID, database) => {
+//   const userURLs = {};
+//   for (const shortURL in database) {
+//     const longURL = database[shortURL].longURL;
+//     if (database[shortURL].userID === userID) {
+//       userURLs[shortURL] = longURL;
+//     }
+//   }
+//   return userURLs;
+// };
+
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
+    userID: "user2RandomID",
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW",
+    userID: "userRandomID",
   },
 };
 
@@ -82,10 +93,8 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  console.log(users);
   const userId = req.cookies["user_id"];
-  console.log("user_id", userId);
-  console.log(users[userId]);
+
   const templateVars = {
     urls: urlDatabase,
     users: users[userId],
@@ -116,27 +125,13 @@ app.get("/urls/:shortURL", (req, res) => {
   //   res.send("<html><body>Error</body></html>\n");
   //   return;
   // }
-  console.log("------kmdlmf", urlDatabase);
+
   const templateVars = {
     shortURL: shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     users: req.cookies[users],
   };
   res.render("urls_show", templateVars);
-});
-
-app.get("/u/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
-  if (urlDatabase[shortURL]) {
-    const longURL = urlDatabase[shortURL].longURL;
-    if (longURL) {
-      res.redirect(longURL);
-    }
-  } else {
-    res.send(
-      `<html><h3>Invalid short URL. Please resubmit your URL <a href="/urls/new">here</a></h3></html>`
-    );
-  }
 });
 
 app.post("/urls", (req, res) => {
@@ -152,15 +147,28 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect(`/urls`); // Respond redirect to index page
+  const id = req.cookies["user_id"];
+
+  if (urlDatabase[shortURL].userID === id) {
+    delete urlDatabase[shortURL];
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Error: You are not logged in");
+  }
+  // delete urlDatabase[shortURL];
+  // res.redirect(`/urls`); // Respond redirect to index page
 });
 
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  urlDatabase[id] = req.body.longURL;
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const id = req.cookies.user_id;
 
-  res.redirect(`/urls`); // Respond redirect to index page
+  if (urlDatabase[shortURL].userID === id) {
+    urlDatabase[shortURL].longURL = req.body.longURL;
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Error: You are not logged in");
+  }
 });
 
 app.post("/register", (req, res) => {
