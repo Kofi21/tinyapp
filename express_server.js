@@ -18,15 +18,7 @@ app.use(
   })
 );
 
-const getUserByEmail = (email, database) => {
-  for (const userID in database) {
-    if (database[userID].email === email) {
-      return database[userID];
-    }
-  }
-  return undefined;
-};
-
+const { getUserByEmail } = require("./helpers");
 // const urlForUser = (userID, database) => {
 //   const userURLs = {};
 //   for (const shortURL in database) {
