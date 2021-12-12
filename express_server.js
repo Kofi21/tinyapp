@@ -1,6 +1,8 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
+
 const app = express();
-const PORT = 8080;
+const PORT = 5000;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -43,14 +45,16 @@ let users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10),
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: bcrypt.hashSync("dishwasher-funk", 10),
   },
 };
+
+console.log(users);
 
 function generateRandomString() {
   return Math.random().toString(20).substr(2, 6);
@@ -174,16 +178,17 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   const userId = generateRandomString();
 
   const newUser = {
     id: userId,
     email,
-    password,
+    password: hashedPassword,
   };
 
-  if (!email || !password) {
+  if (!email || !hashedPassword) {
     return res.status(400).send("email and password cannot be blank");
   }
 
@@ -205,6 +210,7 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  // const hashedPassword = bcrypt.hashSync(password, 10);
 
   const currentUser = getUserByEmail(email, users);
 
@@ -212,12 +218,12 @@ app.post("/login", (req, res) => {
     return res.status(403).send("user does not exist!");
   }
 
-  if (password !== currentUser.password) {
+  if (bcrypt.compareSync(password, currentUser.password)) {
+    res.cookie("user_id", currentUser.id);
+    return res.redirect(`/urls`);
+  } else {
     return res.status(403).send("Incorrect password");
   }
-
-  res.cookie("user_id", currentUser.id);
-  return res.redirect(`/urls`);
 
   // for (const [userID, value] of Object.entries(users)) {
   //   console.log(req.body.email, req.body.password);
