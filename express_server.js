@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const app = express();
-const PORT = 5000;
+const PORT = 3000;
 const { getUserByEmail, generateRandomString } = require("./helpers");
 
 const bodyParser = require("body-parser");
@@ -73,7 +73,6 @@ app.get("/login", (req, res) => {
 //URLs Index page
 app.get("/urls", (req, res) => {
   const userId = req.session.user_id;
-  console.log(req.session.user_id);
 
   const templateVars = {
     urls: urlDatabase,
@@ -86,7 +85,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   const templateVars = {
-    users,
+    users: users[userId],
   };
   if (userId) {
     res.render("urls_new", templateVars);
@@ -98,13 +97,28 @@ app.get("/urls/new", (req, res) => {
 //Individual URL page
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  const id = req.session.user_id;
 
   const templateVars = {
     shortURL: shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    users: req.session.user_id[users],
+    users: users[id],
   };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL].longURL;
+    if (longURL) {
+      res.redirect(longURL);
+    }
+  } else {
+    res.send(
+      `<html><h3>Invalid short URL. Please resubmit your URL <a href="/urls/new">here</a></h3></html>`
+    );
+  }
 });
 
 //POST ROUTES
