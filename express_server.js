@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 3000;
-const { getUserByEmail, generateRandomString } = require("./helpers");
+const { getUserByEmail, generateRandomString, userUrl } = require("./helpers");
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -58,6 +58,10 @@ app.get("/register", (req, res) => {
   const templateVars = {
     users: users[userId],
   };
+
+  if (userId) {
+    return res.redirect("/urls");
+  }
   res.render("urls_register", templateVars);
 });
 
@@ -67,15 +71,20 @@ app.get("/login", (req, res) => {
   const templateVars = {
     users: users[userId],
   };
+
+  if (userId) {
+    return res.redirect("/urls");
+  }
   res.render("urls_login", templateVars);
 });
 
 //URLs Index page
 app.get("/urls", (req, res) => {
   const userId = req.session.user_id;
-
+  let currentUserUrl = userUrl(userId, urlDatabase);
+  console.log(currentUserUrl);
   const templateVars = {
-    urls: urlDatabase,
+    urls: currentUserUrl,
     users: users[userId],
   };
   res.render("urls_index", templateVars);
@@ -99,6 +108,10 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const id = req.session.user_id;
 
+  if (urlDatabase[req.params.shortURL].userID !== id) {
+    res.send("User does not have access to the url or is not logged in");
+  }
+
   const templateVars = {
     shortURL: shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -112,7 +125,7 @@ app.get("/u/:shortURL", (req, res) => {
   if (urlDatabase[shortURL]) {
     const longURL = urlDatabase[shortURL].longURL;
     if (longURL) {
-      res.redirect(longURL);
+      res.redirect("http://" + longURL);
     }
   } else {
     res.send(
@@ -152,9 +165,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const id = req.session.user_id;
+  console.log(shortURL);
 
   if (urlDatabase[shortURL].userID === id) {
     urlDatabase[shortURL].longURL = req.body.longURL;
+    console.log(" longurl", req.body.longURL);
     res.redirect("/urls");
   } else {
     res.status(403).send("Error: You are not logged in");
@@ -175,7 +190,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword,
   };
 
-  if (!email || !hashedPassword) {
+  if (!email || !password) {
     return res.status(400).send("email and password cannot be blank");
   }
 
