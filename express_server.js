@@ -2,7 +2,12 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 3000;
-const { getUserByEmail, generateRandomString, userUrl } = require("./helpers");
+const {
+  getUserByEmail,
+  generateRandomString,
+  userUrl,
+  removeHttp,
+} = require("./helpers");
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -140,7 +145,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   let newID = generateRandomString();
   urlDatabase[newID] = {
-    longURL: req.body.longURL,
+    longURL: removeHttp(req.body.longURL),
     userID: req.session.user_id,
   };
 
@@ -165,8 +170,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const id = req.session.user_id;
+  const longurl = removeHttp(req.body.longURL);
   console.log(shortURL);
 
+  console.log(longurl);
   if (urlDatabase[shortURL].userID === id) {
     urlDatabase[shortURL].longURL = req.body.longURL;
     console.log(" longurl", req.body.longURL);

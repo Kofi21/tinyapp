@@ -22,4 +22,14 @@ function generateRandomString() {
   return Math.random().toString(20).substr(2, 6);
 }
 
-module.exports = { getUserByEmail, generateRandomString, userUrl };
+function removeHttp(longurl) {
+  let fixed = longurl;
+  if (longurl.startsWith("http://")) {
+    fixed = longurl.substring("http://".length);
+  } else if (longurl.startsWith("https://")) {
+    fixed = longurl.substring("https://".length);
+  }
+  return fixed;
+}
+
+module.exports = { getUserByEmail, generateRandomString, userUrl, removeHttp };
